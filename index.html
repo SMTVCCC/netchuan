@@ -408,6 +408,7 @@
     <script>
         let ws = null;
         let currentFile = null;
+        let retryCount = 0; // 新增重试计数器
 
         // 文件上传相关
         const fileInput = document.getElementById('fileInput');
@@ -466,7 +467,9 @@
 
         // WebSocket 连接
         function connectWebSocket() {
-            ws = new WebSocket('ws://113.44.130.103:3000');
+            // 尝试从环境变量或配置中获取WebSocket地址，否则使用默认值
+            const wsAddress = window.WEBSOCKET_URL || 'ws://113.44.130.103:3000';
+            ws = new WebSocket(wsAddress);
             
             ws.onopen = () => {
                 const status = document.getElementById('connectionStatus');
@@ -475,12 +478,19 @@
                 showToast('连接成功');
             };
 
-            ws.onclose = () => {
+            ws.onclose = (event) => {
                 const status = document.getElementById('connectionStatus');
                 status.className = 'status disconnected';
                 status.innerHTML = '<i class="material-icons">cloud_off</i><span>未连接</span>';
-                showToast('连接失败，请检查服务器地址和端口', 'error');
-                setTimeout(connectWebSocket, 3000);
+                let errorMessage = '连接失败，请检查服务器地址和端口';
+                if (event.code === 1006) {
+                    errorMessage = '连接中断，服务器可能已关闭或网络不稳定';
+                }
+                showToast(errorMessage, 'error');
+                console.warn('WebSocket连接关闭:', event.code, event.reason);
+                // 增加指数退避重试机制
+                setTimeout(connectWebSocket, Math.min(1000 * Math.pow(2, retryCount), 30000)); // 最长30秒重试间隔
+                retryCount++;
             };
 
             ws.onerror = (error) => {
@@ -489,6 +499,11 @@
                 status.innerHTML = '<i class="material-icons">error</i><span>连接错误</span>';
                 showToast('连接错误，请检查服务器是否正常运行', 'error');
                 console.error('WebSocket错误:', error);
+                // 错误发生时也尝试重连
+                if (ws.readyState === WebSocket.CLOSED) {
+                    setTimeout(connectWebSocket, Math.min(1000 * Math.pow(2, retryCount), 30000));
+                    retryCount++;
+                }
             };
 
             ws.onmessage = (event) => {
@@ -541,6 +556,7 @@
                                 fileInput.value = '';
                                 updateFileCount();
                             }, 1000);
+                            retryCount = 0; // 文件发送成功后重置重试计数器
                         }
                     }
                 };
@@ -551,4 +567,4 @@
         connectWebSocket();
     </script>
 </body>
-</html> 
+</html>
