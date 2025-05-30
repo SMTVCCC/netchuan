@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件传输</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2196f3;
+            --primary-dark: #1976d2;
+            --success-color: #4caf50;
+            --error-color: #f44336;
+            --background-color: #f8f9fa;
+            --text-color: #2c3e50;
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --hover-transform: translateY(-2px);
+            --active-transform: translateY(0);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .main-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 30px;
+            font-weight: 600;
+            font-size: 2.2em;
+            position: relative;
+            grid-column: 1 / -1;
+        }
+
+        h1::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background: var(--primary-color);
+            margin: 15px auto 0;
+            border-radius: 2px;
+        }
+
+        .status {
+            padding: 12px 20px;
+            margin: 15px 0;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            text-align: center;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 0.95em;
+            animation: pulse 2s infinite;
+        }
+
+        .status i {
+            font-size: 20px;
+        }
+
+        .connected {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: var(--primary-dark);
+            border: none;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.1);
+        }
+
+        .disconnected {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            color: var(--error-color);
+            border: none;
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.1);
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: 180px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .file-input-button {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+            border: 2px dashed #cbd5e0;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .file-input-button i {
+            font-size: 42px;
+            color: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .file-input-button:hover {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            transform: var(--hover-transform);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-input-button:hover i {
+            animation: pulse 1s infinite;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 1em;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+
+        button:focus:not(:active)::after {
+            animation: ripple 1s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+            color: var(--text-color);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            transform: var(--hover-transform);
+            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+        }
+
+        button:active {
+            transform: var(--active-transform);
+        }
+
+        .progress-wrapper {
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .progress {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+            width: 0%;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0.3) 50%,
+                rgba(255,255,255,0) 100%
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .file-list {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            max-height: 500px;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .file-list h3 {
+            color: var(--text-color);
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 10px 0;
+            z-index: 1;
+        }
+
+        .file-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .file-list-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .file-list-actions button {
+            padding: 6px 12px;
+            font-size: 0.9em;
+        }
+
+        .file-list-actions button i {
+            font-size: 1.1em;
+        }
+
+        .file-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .file-list li {
+            padding: 12px;
+            border-bottom: 1px solid #edf2f7;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .file-list li:last-child {
+            border-bottom: none;
+        }
+
+        .file-list li:hover {
+            background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
+            transform: translateX(5px) scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-list i {
+            color: var(--primary-color);
+        }
+
+        .file-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .file-name {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-size {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .file-actions button {
+            padding: 6px;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+
+        .file-actions button:hover {
+            transform: scale(1.1);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: var(--transition);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .toast.error {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .upload-count {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--primary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: var(--transition);
+            animation: scaleIn 0.3s ease-out;
+        }
+
+        .upload-count.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
+            border-radius: var(--border-radius);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-item.online {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        }
+
+        .stat-item.files {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        }
+
+        .stat-item.files-list {
+            grid-column: span 1;
+            text-align: left;
+            padding: 15px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .files-list-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 3px;
+        }
+
+        .file-tag {
+            background: rgba(33, 150, 243, 0.1);
+            color: var(--primary-color);
+            padding: 3px 6px;
+            border-radius: 8px;
+            font-size: 0.75em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .file-tag:hover {
+            background: rgba(33, 150, 243, 0.2);
+            transform: scale(1.05);
+        }
+
+        .file-tag i {
+            font-size: 0.85em;
+        }
+
+        .stat-item.files-list .stat-label {
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 0.9em;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item.online .stat-value {
+            color: #1976d2;
+        }
+
+        .stat-item.files .stat-value {
+            color: #2e7d32;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .stat-label i {
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            body {
+                padding: 10px;
+            }
+
+            .main-card {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        /* 暗色模式支持 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text-color: #e2e8f0;
+                --background-color: #1a202c;
+            }
+
+            body {
+                background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            }
+
+            .main-card, .stats-card {
+                background: rgba(26, 32, 44, 0.95);
+            }
+
+            .file-input-button {
+                background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+                border-color: #4a5568;
+            }
+
+            .file-list {
+                background: #2d3748;
+            }
+
+            .file-list h3 {
+                background: #2d3748;
+            }
+
+            .file-list li {
+                border-color: #4a5568;
+            }
+
+            .file-list li:hover {
+                background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            }
+
+            .stat-item {
+                background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            }
+
+            .stat-label {
+                color: #a0aec0;
+            }
+
+            button.secondary {
+                background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+                color: var(--text-color);
+            }
+
+            .file-list li:hover {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            }
+
+            .stat-item:hover {
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            }
+
+            .file-tag {
+                background: rgba(33, 150, 243, 0.2);
+                color: #90caf9;
+            }
+
+            .file-tag:hover {
+                background: rgba(33, 150, 243, 0.3);
+            }
+
+            .stat-item.files-list .stat-label {
+                border-bottom-color: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        /* 添加全局动画关键帧 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 应用动画到主要元素 */
+        .container {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .main-card, .stats-card {
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .file-list li {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* 增强按钮动画 */
+        button {
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+
+        button:focus:not(:active)::after {
+            animation: ripple 1s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+
+        /* 文件上传区域动画增强 */
+        .file-input-button {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .file-input-button:hover {
+            transform: var(--hover-transform);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-input-button:active {
+            transform: var(--active-transform);
+        }
+
+        .file-input-button i {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .file-input-button:hover i {
+            animation: pulse 1s infinite;
+        }
+
+        /* 进度条动画增强 */
+        .progress-bar {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0.3) 50%,
+                rgba(255,255,255,0) 100%
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        /* 文件列表项动画 */
+        .file-list li {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .file-list li:hover {
+            transform: translateX(5px) scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-actions button {
+            transition: all 0.2s ease;
+        }
+
+        .file-actions button:hover {
+            transform: scale(1.1);
+        }
+
+        /* 统计卡片动画 */
+        .stat-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-item:hover {
+            transform: var(--hover-transform);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-value {
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover .stat-value {
+            transform: scale(1.1);
+            color: var(--primary-dark);
+        }
+
+        /* 连接状态动画 */
+        .status {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .status.connected i {
+            animation: pulse 2s infinite;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: rotate 1s linear infinite;
+        }
+
+        /* 文件上传计数动画 */
+        .upload-count {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .upload-count.show {
+            animation: scaleIn 0.3s ease-out;
+        }
+
+        /* 暗色模式动画调整 */
+        @media (prefers-color-scheme: dark) {
+            .file-list li:hover {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            }
+
+            .stat-item:hover {
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>文件传输系统</h1>
+        
+        <div class="main-card">
+            <div id="connectionStatus" class="status disconnected">
+                <i class="material-icons">cloud_off</i>
+                <span>未连接</span>
+            </div>
+
+            <div class="upload-section">
+                <div class="file-input-wrapper">
+                    <div class="file-input-button">
+                        <i class="material-icons">cloud_upload</i>
+                        <span>点击或拖拽文件到此处上传</span>
+                        <span style="font-size: 0.9em; color: #666;">支持多文件上传</span>
+                    </div>
+                    <input type="file" id="fileInput" multiple>
+                    <div class="upload-count" id="uploadCount"></div>
+                </div>
+                <div class="button-group">
+                    <button onclick="sendFiles()">
+                        <i class="material-icons">send</i>
+                        <span>发送文件</span>
+                    </button>
+                    <button class="secondary" onclick="clearFiles()">
+                        <i class="material-icons">clear</i>
+                        <span>清空选择</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="progress-wrapper">
+                <div class="progress">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+            </div>
+
+            <div class="file-list">
+                <div class="file-list-header">
+                    <h3>
+                        <i class="material-icons">folder</i>
+                        接收的文件
+                    </h3>
+                    <div class="file-list-actions">
+                        <button class="secondary" onclick="downloadAllFiles()">
+                            <i class="material-icons">download</i>
+                            全部下载
+                        </button>
+                        <button class="secondary" onclick="clearReceivedFiles()">
+                            <i class="material-icons">clear_all</i>
+                            清空列表
+                        </button>
+                    </div>
+                </div>
+                <ul id="receivedFiles"></ul>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h3>
+                <i class="material-icons">analytics</i>
+                传输统计
+            </h3>
+            <div class="stats-grid">
+                <div class="stat-item online">
+                    <div class="stat-value" id="onlineCount">0</div>
+                    <div class="stat-label">
+                        <i class="material-icons">group</i>
+                        在线人数
+                    </div>
+                </div>
+                <div class="stat-item files">
+                    <div class="stat-value" id="totalFilesSent">0</div>
+                    <div class="stat-label">
+                        <i class="material-icons">send</i>
+                        已发送文件
+                    </div>
+                </div>
+                <div class="stat-item files-list">
+                    <div class="stat-label">
+                        <i class="material-icons">folder</i>
+                        已发送文件列表
+                    </div>
+                    <div class="files-list-container" id="filesList"></div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalSize">0 MB</div>
+                    <div class="stat-label">
+                        <i class="material-icons">storage</i>
+                        总大小
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="successRate">0%</div>
+                    <div class="stat-label">
+                        <i class="material-icons">check_circle</i>
+                        成功率
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="avgSpeed">0 MB/s</div>
+                    <div class="stat-label">
+                        <i class="material-icons">speed</i>
+                        平均速度
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">
+        <i class="material-icons"></i>
+        <span></span>
+    </div>
+
+    <script>
+        let ws = null;
+        let currentFile = null;
+        let retryCount = 0;
+        let stats = {
+            totalFiles: 0,
+            totalSize: 0,
+            successCount: 0,
+            startTime: null
+        };
+
+        // 文件上传相关
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.querySelector('.file-input-button');
+        const uploadCount = document.getElementById('uploadCount');
+
+        function updateFileCount() {
+            const count = fileInput.files.length;
+            if (count > 0) {
+                uploadCount.textContent = `已选择 ${count} 个文件`;
+                uploadCount.classList.add('show');
+            } else {
+                uploadCount.classList.remove('show');
+            }
+        }
+
+        function clearFiles() {
+            fileInput.value = '';
+            updateFileCount();
+            document.getElementById('progressBar').style.width = '0%';
+            showToast('已清空文件选择');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function updateStats() {
+            const elements = {
+                totalSize: document.getElementById('totalSize'),
+                successRate: document.getElementById('successRate'),
+                avgSpeed: document.getElementById('avgSpeed')
+            };
+
+            // 添加数字变化动画
+            Object.entries(elements).forEach(([key, element]) => {
+                let newValue;
+                switch(key) {
+                    case 'totalSize':
+                        newValue = formatFileSize(stats.totalSize);
+                        break;
+                    case 'successRate':
+                        newValue = (stats.totalFiles > 0 ? (stats.successCount / stats.totalFiles * 100).toFixed(1) : 0) + '%';
+                        break;
+                    case 'avgSpeed':
+                        const elapsedTime = (Date.now() - stats.startTime) / 1000;
+                        newValue = elapsedTime > 0 ? formatFileSize(stats.totalSize / elapsedTime) + '/s' : '0 MB/s';
+                        break;
+                }
+
+                if (element.textContent !== newValue) {
+                    element.style.animation = 'scaleIn 0.3s ease-out';
+                    element.textContent = newValue;
+                    setTimeout(() => {
+                        element.style.animation = '';
+                    }, 300);
+                }
+            });
+        }
+
+        fileInput.addEventListener('change', updateFileCount);
+
+        // 拖拽上传
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+            dropZone.style.transform = 'scale(1.02)';
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#cbd5e0';
+            dropZone.style.transform = 'scale(1)';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#cbd5e0';
+            dropZone.style.transform = 'scale(1)';
+            
+            const files = e.dataTransfer.files;
+            fileInput.files = files;
+            updateFileCount();
+        });
+
+        // Toast 通知
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = toast.querySelector('i');
+            const text = toast.querySelector('span');
+
+            icon.textContent = type === 'success' ? 'check_circle' : 'error';
+            text.textContent = message;
+            toast.className = `toast ${type} show`;
+
+            // 添加退出动画
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(100px)';
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    toast.style.opacity = '';
+                    toast.style.transform = '';
+                }, 300);
+            }, 2700);
+        }
+
+        // WebSocket 连接
+        function connectWebSocket() {
+            const wsAddress = window.WEBSOCKET_URL || 'ws://113.44.130.103:3000';
+            ws = new WebSocket(wsAddress);
+            
+            ws.onopen = () => {
+                const status = document.getElementById('connectionStatus');
+                status.className = 'status connected';
+                status.innerHTML = '<i class="material-icons">cloud_done</i><span>已连接</span>';
+                showToast('连接成功');
+                retryCount = 0;
+            };
+
+            ws.onclose = (event) => {
+                const status = document.getElementById('connectionStatus');
+                status.className = 'status disconnected';
+                status.innerHTML = '<i class="material-icons">cloud_off</i><span>未连接</span>';
+                let errorMessage = '连接失败，请检查服务器地址和端口';
+                if (event.code === 1006) {
+                    errorMessage = '连接中断，服务器可能已关闭或网络不稳定';
+                }
+                showToast(errorMessage, 'error');
+                console.warn('WebSocket连接关闭:', event.code, event.reason);
+                setTimeout(connectWebSocket, Math.min(1000 * Math.pow(2, retryCount), 30000));
+                retryCount++;
+            };
+
+            ws.onerror = (error) => {
+                const status = document.getElementById('connectionStatus');
+                status.className = 'status disconnected';
+                status.innerHTML = '<i class="material-icons">error</i><span>连接错误</span>';
+                showToast('连接错误，请检查服务器是否正常运行', 'error');
+                console.error('WebSocket错误:', error);
+                if (ws.readyState === WebSocket.CLOSED) {
+                    setTimeout(connectWebSocket, Math.min(1000 * Math.pow(2, retryCount), 30000));
+                    retryCount++;
+                }
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'stats') {
+                    // 更新在线人数和已发送文件数
+                    document.getElementById('onlineCount').textContent = data.onlineCount;
+                    document.getElementById('totalFilesSent').textContent = data.totalFilesSent;
+                } else if (data.type === 'fileInfo') {
+                    // 更新总大小和开始时间
+                    stats.totalSize = data.totalSize;
+                    stats.startTime = data.startTime;
+                    updateStats();
+                } else if (data.type === 'file') {
+                    const blob = new Blob([data.content], { type: data.fileType });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <i class="material-icons">insert_drive_file</i>
+                        <div class="file-info">
+                            <a href="${url}" download="${data.fileName}" class="file-name">${data.fileName}</a>
+                            <span class="file-size">${formatFileSize(data.content.byteLength)}</span>
+                        </div>
+                        <div class="file-actions">
+                            <button class="secondary" onclick="window.open('${url}', '_blank')">
+                                <i class="material-icons">visibility</i>
+                            </button>
+                            <button class="secondary" onclick="downloadFile('${url}', '${data.fileName}')">
+                                <i class="material-icons">download</i>
+                            </button>
+                        </div>
+                    `;
+                    document.getElementById('receivedFiles').appendChild(li);
+                    showToast('收到新文件');
+                    
+                    // 更新统计信息
+                    stats.totalFiles++;
+                    stats.totalSize = data.totalSize;
+                    stats.startTime = data.startTime;
+                    stats.successCount++;
+                    updateStats();
+                }
+            };
+        }
+
+        function downloadFile(url, fileName) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        let sentFiles = new Set(); // 用于存储已发送的文件名
+
+        function addFileToList(fileName) {
+            if (sentFiles.has(fileName)) return;
+            sentFiles.add(fileName);
+
+            const filesList = document.getElementById('filesList');
+            const fileTag = document.createElement('div');
+            fileTag.className = 'file-tag';
+            fileTag.innerHTML = `
+                <i class="material-icons">insert_drive_file</i>
+                <span>${fileName}</span>
+            `;
+            
+            // 添加动画效果
+            fileTag.style.opacity = '0';
+            fileTag.style.transform = 'scale(0.8)';
+            filesList.appendChild(fileTag);
+            
+            // 触发重排以应用动画
+            fileTag.offsetHeight;
+            fileTag.style.opacity = '1';
+            fileTag.style.transform = 'scale(1)';
+
+            // 自适应字体大小
+            adjustFontSize();
+        }
+
+        function adjustFontSize() {
+            const container = document.getElementById('filesList');
+            const tags = container.getElementsByClassName('file-tag');
+            const containerWidth = container.clientWidth;
+            const totalTags = tags.length;
+            
+            if (totalTags === 0) return;
+
+            // 计算每行可以容纳的标签数量
+            const tagsPerRow = Math.floor(containerWidth / 150); // 调整标签最大宽度为150px
+            const rows = Math.ceil(totalTags / tagsPerRow);
+            
+            // 根据行数调整字体大小
+            let fontSize = 0.75; // 默认字体大小调整为0.75em
+            if (rows > 2) {
+                fontSize = Math.max(0.65, 0.75 - (rows - 2) * 0.05);
+            }
+            
+            // 应用字体大小
+            Array.from(tags).forEach(tag => {
+                tag.style.fontSize = `${fontSize}em`;
+            });
+        }
+
+        // 监听窗口大小变化
+        window.addEventListener('resize', adjustFontSize);
+
+        function sendFiles() {
+            const files = fileInput.files;
+            if (files.length === 0) {
+                showToast('请先选择文件', 'error');
+                return;
+            }
+
+            if (!stats.startTime) {
+                stats.startTime = Date.now();
+            }
+
+            const sendButton = document.querySelector('button:first-child');
+            const originalContent = sendButton.innerHTML;
+            sendButton.innerHTML = '<span class="loading"></span> 发送中...';
+            sendButton.disabled = true;
+
+            let completed = 0;
+            const totalFiles = files.length;
+            let totalSize = 0;
+
+            // 计算总文件大小
+            for (const file of files) {
+                totalSize += file.size;
+            }
+
+            // 发送文件信息
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'fileInfo',
+                    totalSize: totalSize,
+                    startTime: stats.startTime
+                }));
+            }
+
+            for (const file of files) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'file',
+                            fileName: file.name,
+                            fileType: file.type,
+                            content: e.target.result,
+                            totalSize: totalSize,
+                            startTime: stats.startTime
+                        }));
+                        
+                        // 添加到文件列表
+                        addFileToList(file.name);
+                        
+                        completed++;
+                        const progress = (completed / totalFiles) * 100;
+                        const progressBar = document.getElementById('progressBar');
+                        progressBar.style.width = `${progress}%`;
+
+                        // 更新统计信息
+                        stats.totalFiles++;
+                        stats.totalSize += file.size;
+                        stats.successCount++;
+                        updateStats();
+
+                        if (completed === totalFiles) {
+                            showToast('文件发送完成');
+                            setTimeout(() => {
+                                progressBar.style.width = '0%';
+                                fileInput.value = '';
+                                updateFileCount();
+                                sendButton.innerHTML = originalContent;
+                                sendButton.disabled = false;
+                            }, 1000);
+                            retryCount = 0;
+                        }
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        // 添加定时更新统计信息
+        setInterval(updateStats, 1000);
+
+        connectWebSocket();
+
+        // 添加新的JavaScript函数
+        function downloadAllFiles() {
+            const fileLinks = document.querySelectorAll('#receivedFiles .file-name');
+            if (fileLinks.length === 0) {
+                showToast('没有可下载的文件', 'error');
+                return;
+            }
+
+            // 创建一个隐藏的iframe来处理下载
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+
+            // 依次下载每个文件
+            let index = 0;
+            function downloadNext() {
+                if (index < fileLinks.length) {
+                    const link = fileLinks[index];
+                    iframe.src = link.href;
+                    index++;
+                    setTimeout(downloadNext, 1000); // 延迟1秒下载下一个文件
+                } else {
+                    document.body.removeChild(iframe);
+                    showToast('所有文件下载完成');
+                }
+            }
+
+            downloadNext();
+        }
+
+        function clearReceivedFiles() {
+            const fileList = document.getElementById('receivedFiles');
+            if (fileList.children.length === 0) {
+                showToast('文件列表已为空', 'error');
+                return;
+            }
+
+            // 创建确认对话框
+            if (confirm('确定要清空文件列表吗？')) {
+                // 释放所有文件的URL对象
+                const fileLinks = document.querySelectorAll('#receivedFiles .file-name');
+                fileLinks.forEach(link => {
+                    URL.revokeObjectURL(link.href);
+                });
+
+                // 清空列表
+                fileList.innerHTML = '';
+                showToast('文件列表已清空');
+            }
+        }
+    </script>
+</body>
+</html> 
