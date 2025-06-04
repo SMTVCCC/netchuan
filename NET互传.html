@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文件传输</title>
+    <title>NET文件互传</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📤</text></svg>">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
@@ -860,7 +860,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>文件传输系统</h1>
+        <h1>NET互传</h1>
         
         <div class="main-card">
             <div id="connectionStatus" class="status disconnected">
@@ -966,6 +966,10 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <div id="announcementBar" style="margin: 20px 0 0 0; padding: 16px; background: #fffbe6; border-radius: 10px; color: #b26a00; font-size: 1.08em; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.08); display: none;">
+            <i class="material-icons" style="vertical-align: middle;">campaign</i>
+            <span id="announcementText"></span>
         </div>
     </div>
 
@@ -1151,7 +1155,14 @@
                     stats.startTime = data.startTime;
                     updateStats();
                 } else if (data.type === 'file') {
-                    const blob = new Blob([data.content], { type: data.fileType });
+                    // 将Base64字符串转换回ArrayBuffer
+                    const binaryString = atob(data.content);
+                    const uint8Array = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        uint8Array[i] = binaryString.charCodeAt(i);
+                    }
+                    
+                    const blob = new Blob([uint8Array], { type: data.fileType });
                     const url = URL.createObjectURL(blob);
                     
                     const li = document.createElement('li');
@@ -1159,7 +1170,7 @@
                         <i class="material-icons">insert_drive_file</i>
                         <div class="file-info">
                             <a href="${url}" download="${data.fileName}" class="file-name">${data.fileName}</a>
-                            <span class="file-size">${formatFileSize(data.content.byteLength)}</span>
+                            <span class="file-size">${formatFileSize(uint8Array.byteLength)}</span>
                         </div>
                         <div class="file-actions">
                             <button class="secondary" onclick="window.open('${url}', '_blank')">
@@ -1179,6 +1190,16 @@
                     stats.startTime = data.startTime;
                     stats.successCount++;
                     updateStats();
+                } else if (data.type === 'announcement') {
+                    // 显示公告栏
+                    const bar = document.getElementById('announcementBar');
+                    const text = document.getElementById('announcementText');
+                    if (data.content && data.content.trim() !== '') {
+                        text.textContent = data.content;
+                        bar.style.display = 'block';
+                    } else {
+                        bar.style.display = 'none';
+                    }
                 }
             };
         }
@@ -1285,11 +1306,17 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     if (ws && ws.readyState === WebSocket.OPEN) {
+                        // 将ArrayBuffer转换为Base64字符串
+                        const arrayBuffer = e.target.result;
+                        const uint8Array = new Uint8Array(arrayBuffer);
+                        const binaryString = uint8Array.reduce((data, byte) => data + String.fromCharCode(byte), '');
+                        const base64String = btoa(binaryString);
+                        
                         ws.send(JSON.stringify({
                             type: 'file',
                             fileName: file.name,
                             fileType: file.type,
-                            content: e.target.result,
+                            content: base64String,
                             totalSize: totalSize,
                             startTime: stats.startTime
                         }));
@@ -1382,4 +1409,4 @@
         }
     </script>
 </body>
-</html> 
+</html>
