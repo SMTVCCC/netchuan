@@ -551,6 +551,10 @@
             color: #2e7d32;
         }
 
+        .stat-item.feedback .stat-value {
+            font-size: 1.2em;
+        }
+
         .stat-label {
             font-size: 0.9em;
             color: #666;
@@ -645,6 +649,15 @@
 
             .stat-item:hover {
                 box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            }
+            
+            .stat-item.receiving {
+                background: linear-gradient(135deg, #4a3e2d 0%, #3a2e1a 100%) !important;
+                color: #fbd38d !important;
+            }
+            
+            .stat-item.receiving .stat-label {
+                color: #fbb86f !important;
             }
 
             .file-tag {
@@ -807,9 +820,22 @@
             transform: var(--hover-transform);
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         }
+        
+        .stat-item.receiving {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            color: #e65100;
+        }
+        
+        .stat-item.receiving .stat-label {
+            color: #ff9800;
+        }
 
         .stat-value {
             transition: all 0.3s ease;
+        }
+
+        .stat-item.feedback .stat-value {
+            font-size: 1.2em;
         }
 
         .stat-item:hover .stat-value {
@@ -915,6 +941,7 @@
                 </div>
                 <ul id="receivedFiles"></ul>
             </div>
+
         </div>
 
         <div class="stats-card">
@@ -944,11 +971,25 @@
                     </div>
                     <div class="files-list-container" id="filesList"></div>
                 </div>
+                <div class="stat-item" id="receiveStatusBox">
+                    <div class="stat-value" id="receiveStatusText">0</div>
+                    <div class="stat-label">
+                        <i class="material-icons">cloud_download</i>
+                        待接收文件
+                    </div>
+                </div>
                 <div class="stat-item">
                     <div class="stat-value" id="totalSize">0 MB</div>
                     <div class="stat-label">
                         <i class="material-icons">storage</i>
                         总大小
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="avgSpeed">0 MB/s</div>
+                    <div class="stat-label">
+                        <i class="material-icons">speed</i>
+                        平均速度
                     </div>
                 </div>
                 <div class="stat-item">
@@ -958,11 +999,11 @@
                         成功率
                     </div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="avgSpeed">0 MB/s</div>
+                <div class="stat-item feedback">
+                    <div class="stat-value">smtoffice@yeah.net</div>
                     <div class="stat-label">
-                        <i class="material-icons">speed</i>
-                        平均速度
+                        <i class="material-icons">feedback</i>
+                        问题反馈
                     </div>
                 </div>
             </div>
@@ -1112,6 +1153,34 @@
         const CLIENT_VERSION = '1.20';
         let isVersionChecked = false;
         let isVersionValid = false;
+        
+        // 接收状态管理
+        let receiveStatus = {
+            isReceiving: false,
+            totalReceived: 0,
+            currentReceiving: 0,
+            pendingFiles: 0,
+            latestFile: null
+        };
+        
+        function updateReceiveStatus() {
+              const statusBox = document.getElementById('receiveStatusBox');
+              const statusText = document.getElementById('receiveStatusText');
+              const icon = statusBox.querySelector('i');
+              
+              if (receiveStatus.isReceiving) {
+                  statusBox.setAttribute('data-status', 'receiving');
+                  statusBox.className = 'stat-item receiving';
+                  icon.textContent = 'cloud_download';
+              } else {
+                  statusBox.removeAttribute('data-status');
+                  statusBox.className = 'stat-item';
+                  icon.textContent = 'cloud_download';
+              }
+              
+              // 显示待接收文件数量
+              statusText.textContent = receiveStatus.pendingFiles.toString();
+          }
 
         // WebSocket 连接
         function connectWebSocket() {
@@ -1169,8 +1238,17 @@
                     // 更新总大小和开始时间
                     stats.totalSize = data.totalSize;
                     stats.startTime = data.startTime;
+                    // 增加待接收文件计数
+                    receiveStatus.pendingFiles++;
                     updateStats();
+                    updateReceiveStatus();
                 } else if (data.type === 'file') {
+                    // 开始接收文件状态
+                    receiveStatus.isReceiving = true;
+                    receiveStatus.currentReceiving++;
+                    receiveStatus.latestFile = data.fileName;
+                    updateReceiveStatus();
+                    
                     // 将Base64字符串转换回ArrayBuffer
                     const binaryString = atob(data.content);
                     const uint8Array = new Uint8Array(binaryString.length);
@@ -1199,6 +1277,16 @@
                     `;
                     document.getElementById('receivedFiles').appendChild(li);
                     showToast('收到新文件');
+                    
+                    // 更新接收状态
+                    receiveStatus.totalReceived++;
+                    receiveStatus.currentReceiving--;
+                    receiveStatus.pendingFiles--; // 减少待接收文件计数
+                    if (receiveStatus.currentReceiving <= 0) {
+                        receiveStatus.isReceiving = false;
+                        receiveStatus.currentReceiving = 0;
+                    }
+                    updateReceiveStatus();
                     
                     // 更新统计信息
                     stats.totalFiles++;
