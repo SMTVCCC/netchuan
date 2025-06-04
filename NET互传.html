@@ -860,7 +860,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>NET互传</h1>
+        <h1>NET文件互传</h1>
         
         <div class="main-card">
             <div id="connectionStatus" class="status disconnected">
@@ -934,7 +934,7 @@
                     <div class="stat-value" id="totalFilesSent">0</div>
                     <div class="stat-label">
                         <i class="material-icons">send</i>
-                        已发送文件
+                        全服发件量
                     </div>
                 </div>
                 <div class="stat-item files-list">
@@ -1009,6 +1009,11 @@
         }
 
         function clearFiles() {
+            if (!isVersionChecked || !isVersionValid) {
+                showToast('版本检测未通过，无法使用', 'error');
+                return;
+            }
+            
             fileInput.value = '';
             updateFileCount();
             document.getElementById('progressBar').style.width = '0%';
@@ -1103,10 +1108,17 @@
             }, 2700);
         }
 
+        // 版本信息
+        const CLIENT_VERSION = '1.20';
+        let isVersionChecked = false;
+        let isVersionValid = false;
+
         // WebSocket 连接
         function connectWebSocket() {
             const wsAddress = window.WEBSOCKET_URL || 'ws://113.44.130.103:3000';
-            ws = new WebSocket(wsAddress);
+            // 在连接URL中包含版本号参数
+            const wsAddressWithVersion = `${wsAddress}?version=${CLIENT_VERSION}`;
+            ws = new WebSocket(wsAddressWithVersion);
             
             ws.onopen = () => {
                 const status = document.getElementById('connectionStatus');
@@ -1114,6 +1126,10 @@
                 status.innerHTML = '<i class="material-icons">cloud_done</i><span>已连接</span>';
                 showToast('连接成功');
                 retryCount = 0;
+                
+                // 连接成功表示版本验证已通过
+                isVersionChecked = true;
+                isVersionValid = true;
             };
 
             ws.onclose = (event) => {
@@ -1268,7 +1284,122 @@
         // 监听窗口大小变化
         window.addEventListener('resize', adjustFontSize);
 
+        // 版本不匹配弹窗
+        function showVersionMismatchDialog(latestVersion, downloadUrl) {
+            // 创建遮罩层
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            
+            // 创建弹窗
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                background: white;
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                text-align: center;
+                max-width: 400px;
+                width: 90%;
+                animation: scaleIn 0.3s ease-out;
+            `;
+            
+            dialog.innerHTML = `
+                <div style="color: #f44336; font-size: 48px; margin-bottom: 20px;">
+                    <i class="material-icons" style="font-size: 48px;">warning</i>
+                </div>
+                <h2 style="color: #333; margin-bottom: 15px;">版本过期</h2>
+                <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">
+                    您当前使用的版本是 <strong>${CLIENT_VERSION}</strong><br>
+                    最新版本是 <strong>${latestVersion}</strong><br><br>
+                    请下载最新版本以继续使用
+                </p>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="window.open('https://netchuan.netlify.app', '_blank')" 
+                             style="
+                                 background: #2196f3;
+                                 color: white;
+                                 border: none;
+                                 padding: 15px 30px;
+                                 border-radius: 8px;
+                                 font-size: 16px;
+                                 font-weight: 500;
+                                 cursor: pointer;
+                                 transition: all 0.3s ease;
+                                 display: inline-flex;
+                                 align-items: center;
+                                 justify-content: center;
+                                 gap: 8px;
+                                 box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+                             "
+                             onmouseover="this.style.background='#1976d2'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(33, 150, 243, 0.4)'"
+                             onmouseout="this.style.background='#2196f3'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(33, 150, 243, 0.3)'">
+                         <i class="material-icons" style="font-size: 18px;">download</i>
+                         立即下载
+                     </button>
+                </div>
+            `;
+            
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+            
+            // 锁定界面
+            lockInterface();
+        }
+        
+        // 锁定界面功能
+        function lockInterface() {
+            // 禁用主要内容区域的所有按钮和输入（不包括弹窗中的按钮）
+            const container = document.querySelector('.container');
+            const buttons = container.querySelectorAll('button');
+            const inputs = container.querySelectorAll('input');
+            
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+            });
+            
+            inputs.forEach(input => {
+                input.disabled = true;
+                input.style.opacity = '0.5';
+            });
+            
+            // 添加遮罩到主要内容区域
+            const lockOverlay = document.createElement('div');
+            lockOverlay.id = 'lockOverlay';
+            lockOverlay.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255, 255, 255, 0.7);
+                z-index: 1000;
+                pointer-events: all;
+                backdrop-filter: blur(2px);
+            `;
+            
+            container.style.position = 'relative';
+            container.appendChild(lockOverlay);
+        }
+
         function sendFiles() {
+            if (!isVersionChecked || !isVersionValid) {
+                showToast('版本检测未通过，无法使用', 'error');
+                return;
+            }
+            
             const files = fileInput.files;
             if (files.length === 0) {
                 showToast('请先选择文件', 'error');
@@ -1359,6 +1490,11 @@
 
         // 添加新的JavaScript函数
         function downloadAllFiles() {
+            if (!isVersionChecked || !isVersionValid) {
+                showToast('版本检测未通过，无法使用', 'error');
+                return;
+            }
+            
             const fileLinks = document.querySelectorAll('#receivedFiles .file-name');
             if (fileLinks.length === 0) {
                 showToast('没有可下载的文件', 'error');
@@ -1388,6 +1524,11 @@
         }
 
         function clearReceivedFiles() {
+            if (!isVersionChecked || !isVersionValid) {
+                showToast('版本检测未通过，无法使用', 'error');
+                return;
+            }
+            
             const fileList = document.getElementById('receivedFiles');
             if (fileList.children.length === 0) {
                 showToast('文件列表已为空', 'error');

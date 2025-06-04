@@ -17,6 +17,67 @@
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.3) 3px, transparent 3px),
+                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.25) 2px, transparent 2px),
+                radial-gradient(circle at 40% 80%, rgba(255,255,255,0.2) 2.5px, transparent 2.5px),
+                radial-gradient(circle at 90% 20%, rgba(255,255,255,0.15) 2px, transparent 2px),
+                radial-gradient(circle at 10% 90%, rgba(255,255,255,0.22) 2px, transparent 2px),
+                radial-gradient(circle at 60% 15%, rgba(255,255,255,0.18) 1.5px, transparent 1.5px),
+                radial-gradient(circle at 15% 60%, rgba(255,255,255,0.16) 2px, transparent 2px);
+            background-size: 120px 120px, 160px 160px, 140px 140px, 100px 100px, 130px 130px, 110px 110px, 150px 150px;
+            animation: floatingParticles 15s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        body::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 75% 25%, rgba(255,255,255,0.12) 3px, transparent 3px),
+                radial-gradient(circle at 25% 75%, rgba(255,255,255,0.1) 2.5px, transparent 2.5px),
+                radial-gradient(circle at 85% 85%, rgba(255,255,255,0.14) 2px, transparent 2px),
+                radial-gradient(circle at 35% 35%, rgba(255,255,255,0.11) 2px, transparent 2px),
+                radial-gradient(circle at 65% 65%, rgba(255,255,255,0.13) 1.5px, transparent 1.5px);
+            background-size: 180px 180px, 140px 140px, 120px 120px, 160px 160px, 130px 130px;
+            animation: floatingParticles 20s ease-in-out infinite reverse;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes floatingParticles {
+            0%, 100% {
+                transform: translateY(0px) translateX(0px) scale(1);
+                opacity: 0.6;
+            }
+            25% {
+                transform: translateY(-20px) translateX(15px) scale(1.2);
+                opacity: 1;
+            }
+            50% {
+                transform: translateY(-10px) translateX(-18px) scale(0.8);
+                opacity: 0.7;
+            }
+            75% {
+                transform: translateY(15px) translateX(8px) scale(1.1);
+                opacity: 0.9;
+            }
         }
         .container {
             background: rgba(255, 255, 255, 0.95);
@@ -28,6 +89,8 @@
             max-width: 600px;
             width: 100%;
             animation: fadeIn 0.8s ease-out;
+            position: relative;
+            z-index: 1;
         }
         h1 {
             color: #2196f3;
@@ -86,6 +149,26 @@
                 background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
                 color: #e2e8f0;
             }
+            
+            body::before {
+                background-image: 
+                    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.15) 3px, transparent 3px),
+                    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.12) 2px, transparent 2px),
+                    radial-gradient(circle at 40% 80%, rgba(255,255,255,0.1) 2.5px, transparent 2.5px),
+                    radial-gradient(circle at 90% 20%, rgba(255,255,255,0.08) 2px, transparent 2px),
+                    radial-gradient(circle at 10% 90%, rgba(255,255,255,0.11) 2px, transparent 2px),
+                    radial-gradient(circle at 60% 15%, rgba(255,255,255,0.09) 1.5px, transparent 1.5px),
+                    radial-gradient(circle at 15% 60%, rgba(255,255,255,0.08) 2px, transparent 2px);
+            }
+            
+            body::after {
+                background-image: 
+                    radial-gradient(circle at 75% 25%, rgba(255,255,255,0.06) 3px, transparent 3px),
+                    radial-gradient(circle at 25% 75%, rgba(255,255,255,0.05) 2.5px, transparent 2.5px),
+                    radial-gradient(circle at 85% 85%, rgba(255,255,255,0.07) 2px, transparent 2px),
+                    radial-gradient(circle at 35% 35%, rgba(255,255,255,0.055) 2px, transparent 2px),
+                    radial-gradient(circle at 65% 65%, rgba(255,255,255,0.065) 1.5px, transparent 1.5px);
+            }
             .container {
                 background: rgba(26, 32, 44, 0.95);
                 box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -118,7 +201,7 @@
     <div class="container">
         <h1>NET互传下载器</h1>
         <p>欢迎使用NET互传下载器！这是一个简单易用的文件传输工具，旨在帮助您快速、安全地在设备之间共享文件。点击下方按钮即可下载应用程序。</p>
-        <a href="NET互传.html" class="download-btn" download>立即下载 NET互传</a>
+        <a href="NET互传.html" class="download-btn" download>下载最新版 NET互传</a>
         <div class="tip">
             <strong>温馨提示：</strong> 服务器位置在中国（香港、澳门同样支持），所以建议使用中国IP进行访问或使用VPN连接中国服务器，以获得最佳下载体验。
         </div>
