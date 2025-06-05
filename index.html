@@ -29,13 +29,13 @@
             width: 100%;
             height: 100%;
             background-image: 
-                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.3) 3px, transparent 3px),
-                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.25) 2px, transparent 2px),
-                radial-gradient(circle at 40% 80%, rgba(255,255,255,0.2) 2.5px, transparent 2.5px),
-                radial-gradient(circle at 90% 20%, rgba(255,255,255,0.15) 2px, transparent 2px),
-                radial-gradient(circle at 10% 90%, rgba(255,255,255,0.22) 2px, transparent 2px),
-                radial-gradient(circle at 60% 15%, rgba(255,255,255,0.18) 1.5px, transparent 1.5px),
-                radial-gradient(circle at 15% 60%, rgba(255,255,255,0.16) 2px, transparent 2px);
+                radial-gradient(circle at 20% 30%, rgba(33, 150, 243, 0.4) 3px, transparent 3px),
+                radial-gradient(circle at 80% 70%, rgba(33, 150, 243, 0.35) 2px, transparent 2px),
+                radial-gradient(circle at 40% 80%, rgba(33, 150, 243, 0.3) 2.5px, transparent 2.5px),
+                radial-gradient(circle at 90% 20%, rgba(33, 150, 243, 0.25) 2px, transparent 2px),
+                radial-gradient(circle at 10% 90%, rgba(33, 150, 243, 0.32) 2px, transparent 2px),
+                radial-gradient(circle at 60% 15%, rgba(33, 150, 243, 0.28) 1.5px, transparent 1.5px),
+                radial-gradient(circle at 15% 60%, rgba(33, 150, 243, 0.26) 2px, transparent 2px);
             background-size: 120px 120px, 160px 160px, 140px 140px, 100px 100px, 130px 130px, 110px 110px, 150px 150px;
             animation: floatingParticles 15s ease-in-out infinite;
             pointer-events: none;
@@ -50,11 +50,11 @@
             width: 100%;
             height: 100%;
             background-image: 
-                radial-gradient(circle at 75% 25%, rgba(255,255,255,0.12) 3px, transparent 3px),
-                radial-gradient(circle at 25% 75%, rgba(255,255,255,0.1) 2.5px, transparent 2.5px),
-                radial-gradient(circle at 85% 85%, rgba(255,255,255,0.14) 2px, transparent 2px),
-                radial-gradient(circle at 35% 35%, rgba(255,255,255,0.11) 2px, transparent 2px),
-                radial-gradient(circle at 65% 65%, rgba(255,255,255,0.13) 1.5px, transparent 1.5px);
+                radial-gradient(circle at 75% 25%, rgba(33, 150, 243, 0.22) 3px, transparent 3px),
+                radial-gradient(circle at 25% 75%, rgba(33, 150, 243, 0.2) 2.5px, transparent 2.5px),
+                radial-gradient(circle at 85% 85%, rgba(33, 150, 243, 0.24) 2px, transparent 2px),
+                radial-gradient(circle at 35% 35%, rgba(33, 150, 243, 0.21) 2px, transparent 2px),
+                radial-gradient(circle at 65% 65%, rgba(33, 150, 243, 0.23) 1.5px, transparent 1.5px);
             background-size: 180px 180px, 140px 140px, 120px 120px, 160px 160px, 130px 130px;
             animation: floatingParticles 20s ease-in-out infinite reverse;
             pointer-events: none;
@@ -208,6 +208,74 @@
         <div style="margin-top: 30px; color: #666; font-size: 0.9em;">
             Made with ❤️ by SMT_Vincent
         </div>
+        <div style="margin-top: 15px; font-size: 0.85em;">
+            <a href="#" id="termsLink" style="color: #2196f3; text-decoration: none; cursor: pointer;">使用须知（下载默认同意）</a>
+        </div>
     </div>
+
+    <!-- 使用须知弹窗 -->
+    <div id="termsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative;">
+            <button id="closeModal" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">×</button>
+            <h2 style="color: #2196f3; margin-bottom: 20px; text-align: center;">使用须知</h2>
+            <div style="line-height: 1.6; color: #333;">
+                <p><strong>欢迎使用NET互传文件传输工具！</strong></p>
+                <p>为了维护良好的网络环境和遵守相关法律法规，请您在使用本工具时严格遵守以下规定：</p>
+                
+                <h3 style="color: #1976d2; margin-top: 20px;">禁止传输内容</h3>
+                <ul style="margin-left: 20px;">
+                    <li>任何违反国家法律法规的内容</li>
+                    <li>色情、淫秽、低俗内容</li>
+                    <li>暴力、血腥、恐怖内容</li>
+                    <li>虚假信息、谣言、不实舆论</li>
+                    <li>侵犯他人知识产权的内容</li>
+                    <li>恶意软件、病毒、木马程序</li>
+                    <li>涉及国家安全、商业机密的敏感信息</li>
+                    <li>其他可能危害网络安全或社会稳定的内容</li>
+                </ul>
+                
+                <h3 style="color: #1976d2; margin-top: 20px;">用户责任</h3>
+                <ul style="margin-left: 20px;">
+                    <li>您对通过本工具传输的所有内容承担完全责任</li>
+                    <li>确保传输内容的合法性和适当性</li>
+                    <li>尊重他人隐私和知识产权</li>
+                    <li>不得利用本工具进行任何违法违规活动</li>
+                </ul>
+                
+                <h3 style="color: #1976d2; margin-top: 20px;">免责声明</h3>
+                <p>本工具仅提供文件传输技术服务，不对用户传输的内容进行审查或承担责任。如因用户违规使用导致的任何法律后果，均由用户自行承担。</p>
+                
+                <p style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                    <strong>重要提醒：</strong>下载并使用本工具即表示您已阅读、理解并同意遵守以上所有条款。请合法合规使用，共同维护良好的网络环境。
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 使用须知弹窗功能
+        document.getElementById('termsLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('termsModal').style.display = 'flex';
+        });
+        
+        document.getElementById('closeModal').addEventListener('click', function() {
+            document.getElementById('termsModal').style.display = 'none';
+        });
+        
+        // 点击背景关闭弹窗
+        document.getElementById('termsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+        
+        // ESC键关闭弹窗
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.getElementById('termsModal').style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>

@@ -830,6 +830,52 @@
             color: #ff9800;
         }
 
+        .download-progress-wrapper {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .download-progress {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .download-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0.3) 50%,
+                rgba(255,255,255,0) 100%
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        .download-progress-text {
+            font-size: 0.8em;
+            color: #666;
+            text-align: center;
+            margin-top: 5px;
+        }
+
         .stat-value {
             transition: all 0.3s ease;
         }
@@ -972,10 +1018,16 @@
                     <div class="files-list-container" id="filesList"></div>
                 </div>
                 <div class="stat-item" id="receiveStatusBox">
-                    <div class="stat-value" id="receiveStatusText">0</div>
+                    <div class="stat-value" id="receiveStatusText">无文件需要下载</div>
+                    <div class="download-progress-wrapper" id="downloadProgressWrapper" style="display: none; margin-top: 10px;">
+                        <div class="download-progress">
+                            <div id="downloadProgressBar" class="download-progress-bar"></div>
+                        </div>
+                        <div class="download-progress-text" id="downloadProgressText">0%</div>
+                    </div>
                     <div class="stat-label">
                         <i class="material-icons">cloud_download</i>
-                        待接收文件
+                        下载状态
                     </div>
                 </div>
                 <div class="stat-item">
@@ -1021,6 +1073,10 @@
 
     <div style="text-align: center; padding: 20px; color: #666; font-size: 0.9em;">
         Made with ❤️ by SMT_Vincent
+    </div>
+    
+    <div style="text-align: center; padding: 10px 20px; color: rgba(102, 102, 102, 0.6); font-size: 0.75em; line-height: 1.4; max-width: 800px; margin: 0 auto;">
+        本工具仅提供文件传输技术服务，不对用户传输的内容进行审查或承担责任。如因用户违规使用导致的任何法律后果，均由用户自行承担。
     </div>
 
     <script>
@@ -1160,27 +1216,48 @@
             totalReceived: 0,
             currentReceiving: 0,
             pendingFiles: 0,
-            latestFile: null
+            latestFile: null,
+            downloadProgress: 0,
+            totalFilesToDownload: 0,
+            completedDownloads: 0
         };
         
         function updateReceiveStatus() {
-              const statusBox = document.getElementById('receiveStatusBox');
-              const statusText = document.getElementById('receiveStatusText');
-              const icon = statusBox.querySelector('i');
-              
-              if (receiveStatus.isReceiving) {
-                  statusBox.setAttribute('data-status', 'receiving');
-                  statusBox.className = 'stat-item receiving';
-                  icon.textContent = 'cloud_download';
-              } else {
-                  statusBox.removeAttribute('data-status');
-                  statusBox.className = 'stat-item';
-                  icon.textContent = 'cloud_download';
-              }
-              
-              // 显示待接收文件数量
-              statusText.textContent = receiveStatus.pendingFiles.toString();
-          }
+            const statusBox = document.getElementById('receiveStatusBox');
+            const statusText = document.getElementById('receiveStatusText');
+            const progressWrapper = document.getElementById('downloadProgressWrapper');
+            const progressBar = document.getElementById('downloadProgressBar');
+            const progressText = document.getElementById('downloadProgressText');
+            const icon = statusBox.querySelector('i');
+            
+            if (receiveStatus.isReceiving || receiveStatus.pendingFiles > 0 || receiveStatus.totalFilesToDownload > 0) {
+                statusBox.setAttribute('data-status', 'receiving');
+                statusBox.className = 'stat-item receiving';
+                icon.textContent = 'cloud_download';
+                
+                // 显示进度条
+                progressWrapper.style.display = 'block';
+                
+                if (receiveStatus.totalFilesToDownload > 0) {
+                    const progress = (receiveStatus.completedDownloads / receiveStatus.totalFilesToDownload) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    progressText.textContent = `${Math.round(progress)}% (${receiveStatus.completedDownloads}/${receiveStatus.totalFilesToDownload})`;
+                    statusText.textContent = `正在下载文件...`;
+                } else {
+                    progressBar.style.width = '0%';
+                    progressText.textContent = '准备下载...';
+                    statusText.textContent = `准备接收 ${receiveStatus.pendingFiles} 个文件`;
+                }
+            } else {
+                statusBox.removeAttribute('data-status');
+                statusBox.className = 'stat-item';
+                icon.textContent = 'cloud_download';
+                
+                // 隐藏进度条
+                progressWrapper.style.display = 'none';
+                statusText.textContent = '无文件需要下载';
+            }
+        }
 
         // WebSocket 连接
         function connectWebSocket() {
@@ -1240,6 +1317,7 @@
                     stats.startTime = data.startTime;
                     // 增加待接收文件计数
                     receiveStatus.pendingFiles++;
+                    receiveStatus.totalFilesToDownload++;
                     updateStats();
                     updateReceiveStatus();
                 } else if (data.type === 'file') {
@@ -1281,11 +1359,24 @@
                     // 更新接收状态
                     receiveStatus.totalReceived++;
                     receiveStatus.currentReceiving--;
-                    receiveStatus.pendingFiles--; // 减少待接收文件计数
+                    receiveStatus.completedDownloads++;
+                    if (receiveStatus.pendingFiles > 0) {
+                        receiveStatus.pendingFiles--; // 减少待接收文件计数
+                    }
                     if (receiveStatus.currentReceiving <= 0) {
                         receiveStatus.isReceiving = false;
                         receiveStatus.currentReceiving = 0;
                     }
+                    
+                    // 如果所有文件都下载完成，重置状态
+                    if (receiveStatus.completedDownloads >= receiveStatus.totalFilesToDownload && receiveStatus.pendingFiles === 0) {
+                        setTimeout(() => {
+                            receiveStatus.totalFilesToDownload = 0;
+                            receiveStatus.completedDownloads = 0;
+                            updateReceiveStatus();
+                        }, 2000); // 2秒后重置状态
+                    }
+                    
                     updateReceiveStatus();
                     
                     // 更新统计信息
